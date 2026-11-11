@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Antigravity 会话长图分享</title>
+  <title>Antigravity Chat to Image</title>
   <script src="/preload.js"></script>
   <link rel="stylesheet" href="/highlight-github-dark.min.css">
   <script src="/marked.min.js"></script>
@@ -885,36 +885,40 @@
   <!-- 顶部控制面板 -->
   <div class="control-panel">
     <div class="header-title">
-      <h2>Antigravity 会话长图分享</h2>
-      <span class="tag">750px 高清卡片</span>
-      <span class="tag" style="background:#eafff0; color:#00b42a;" title="内容过长时自动分页切片，单张≤4000px 杜绝微信压缩模糊，内容零丢失">超长自动分页 (单张≤4000px)</span>
+      <h2 id="uiAppTitle">Antigravity Chat to Image</h2>
+      <span class="tag" id="uiBadgeRetina">750px Retina Cards</span>
+      <span class="tag" id="uiBadgePaging" style="background:#eafff0; color:#00b42a;" title="Automatically paginates long sessions into safe slices under 4000px to avoid compression blur">Auto-Pagination (≤4,000px)</span>
     </div>
 
     <!-- 会话选择与卡片风格配置 -->
     <div class="form-group">
       <select id="convSelect">
-        <option value="">正在载入会话列表...</option>
+        <option value="">Loading conversations...</option>
       </select>
-      <select id="cardThemeSelect" style="max-width: 135px;" title="切换整体界面与长图卡片的全局风格">
-        <option value="auto">🌓 跟随系统</option>
-        <option value="dark">🌙 暗黑风格</option>
-        <option value="light">☀️ 明亮风格</option>
+      <select id="langSelect" style="max-width: 105px;" title="Switch Language">
+        <option value="en">🌐 English</option>
+        <option value="zh">🌐 简体中文</option>
       </select>
-      <button id="btnRefreshConv" class="btn" title="刷新会话列表">🔄 刷新</button>
-      <button id="btnReloadPage" class="btn" onclick="window.location.reload(true)" title="重新加载最新前端代码">⚡ 重载页面</button>
+      <select id="cardThemeSelect" style="max-width: 110px;" title="Toggle UI & card theme">
+        <option value="auto">🌓 Auto</option>
+        <option value="dark">🌙 Dark</option>
+        <option value="light">☀️ Light</option>
+      </select>
+      <button id="btnRefreshConv" class="btn" title="Refresh conversation list">🔄 Refresh</button>
+      <button id="btnReloadPage" class="btn" onclick="window.location.reload(true)" title="Reload latest webview code">⚡ Reload</button>
     </div>
 
     <!-- 问答轮次勾选与快捷工具条 -->
     <div class="turns-container" id="turnsBox" style="display: none;">
       <div class="turns-toolbar">
         <div>
-          <span>共 <b id="totalTurnsCount">0</b> 轮问答，已选中 <b id="selectedTurnsCount" style="color:var(--primary);">0</b> 轮</span>
+          <span id="turnsCountText"><b id="totalTurnsCount">0</b> turns, <b id="selectedTurnsCount" style="color:var(--primary);">0</b> selected</span>
         </div>
         <div class="btn-group">
-          <button id="btnSelectAll" class="btn btn-sm">全选</button>
-          <button id="btnSelectNone" class="btn btn-sm">全不选</button>
-          <button id="btnSelectRecent3" class="btn btn-sm">最近 3 轮</button>
-          <button id="btnGenerate" class="btn btn-sm btn-primary">⚡ 生成长图卡片</button>
+          <button id="btnSelectAll" class="btn btn-sm">Select All</button>
+          <button id="btnSelectNone" class="btn btn-sm">Clear</button>
+          <button id="btnSelectRecent3" class="btn btn-sm">Last 3 Turns</button>
+          <button id="btnGenerate" class="btn btn-sm btn-primary">⚡ Generate Cards</button>
         </div>
       </div>
       <div class="turns-list" id="turnsList"></div>
@@ -927,9 +931,9 @@
   <!-- 卡片瀑布流预览区域 -->
   <div class="preview-section" id="previewSection" style="display: none;">
     <div class="cards-overview-bar">
-      <span id="cardsSummaryText">已生成 0 张长图卡片</span>
+      <span id="cardsSummaryText">0 cards generated</span>
       <div class="btn-group">
-        <button id="btnDownloadAll" class="btn btn-sm">📦 打包下载全量 PNG</button>
+        <button id="btnDownloadAll" class="btn btn-sm">📦 Download All PNGs</button>
       </div>
     </div>
     <div id="cardsList" style="display: flex; flex-direction: column; gap: 32px;"></div>
@@ -945,10 +949,16 @@
       const MAX_CODE_BLOCK_SAFE_HEIGHT = 3200; // 超长代码块拆分阈值
 
       // DOM 元素引用
+      const uiAppTitle = document.getElementById('uiAppTitle');
+      const uiBadgeRetina = document.getElementById('uiBadgeRetina');
+      const uiBadgePaging = document.getElementById('uiBadgePaging');
       const convSelect = document.getElementById('convSelect');
+      const langSelect = document.getElementById('langSelect');
       const cardThemeSelect = document.getElementById('cardThemeSelect');
       const btnRefreshConv = document.getElementById('btnRefreshConv');
+      const btnReloadPage = document.getElementById('btnReloadPage');
       const turnsBox = document.getElementById('turnsBox');
+      const turnsCountText = document.getElementById('turnsCountText');
       const turnsList = document.getElementById('turnsList');
       const totalTurnsCount = document.getElementById('totalTurnsCount');
       const selectedTurnsCount = document.getElementById('selectedTurnsCount');
@@ -962,6 +972,191 @@
       const btnDownloadAll = document.getElementById('btnDownloadAll');
       const sandbox = document.getElementById('measure-sandbox');
       const toastContainer = document.getElementById('toastContainer');
+
+      // 国际化双语字典 (i18n)
+      const I18N = {
+        en: {
+          appTitle: 'Antigravity Chat to Image',
+          badgeRetina: '750px Retina Cards',
+          badgePaging: 'Auto-Pagination (≤4,000px)',
+          badgePagingTitle: 'Automatically paginates long sessions into safe slices under 4000px to avoid compression blur',
+          themeAuto: '🌓 Auto',
+          themeDark: '🌙 Dark',
+          themeLight: '☀️ Light',
+          themeTitle: 'Toggle UI & card theme',
+          btnRefresh: '🔄 Refresh',
+          btnRefreshTitle: 'Refresh conversation list',
+          btnReload: '⚡ Reload',
+          btnReloadTitle: 'Reload latest webview code',
+          loadingConvs: 'Loading conversations...',
+          noConvs: 'No active conversations found',
+          loadConvsFail: 'Failed to load conversation list: ',
+          stepsSuffix: 'steps',
+          parsingTurns: 'Cleaning and parsing conversation transcript...',
+          noTurns: 'No valid turns found in this conversation',
+          selectAll: 'Select All',
+          clearAll: 'Clear',
+          last3Turns: 'Last 3 Turns',
+          btnGenerate: '⚡ Generate Cards',
+          btnGenerating: '⏳ Measuring layout...',
+          roleUser: '👤 User',
+          roleAi: '🤖 Assistant',
+          noPlainText: '(No plain text)',
+          summaryText: (n) => `Smart sliced into ${n} long card${n > 1 ? 's' : ''} (strictly under 4,000px threshold)`,
+          btnDownloadAll: '📦 Download All PNGs',
+          btnDownloadingAll: '⏳ Exporting and saving...',
+          cardNum: (idx, total) => `Card <b>#${idx}</b> / ${total}`,
+          btnCopyCard: '📋 Copy Image',
+          btnCopyingCard: '⏳ Rendering...',
+          btnSaveCard: '💾 Save PNG',
+          brandSub: 'Antigravity AI Conversation',
+          generatedTime: 'Generated: ',
+          retinaSub: 'Retina 750px · Lossless',
+          senderUser: 'User Prompt',
+          senderAi: 'Antigravity AI',
+          continuedTop: '(Continued from previous card)',
+          continuedBottom: '(To be continued on next card...)',
+          footerLeft: 'Powered natively by Antigravity Agent Platform',
+          footerRight: 'Secure & Lossless · Zero CDN',
+          toastCopied: 'Long image copied to clipboard! Ready to paste (Ctrl+V).',
+          toastCopyFail: 'Failed to copy image: ',
+          toastSavedSingle: 'Successfully saved to Downloads and revealed in Explorer!',
+          toastSaveFail: 'Save failed: ',
+          toastRendering: 'Rendering export image...',
+          toastExportFail: 'Export failed: ',
+          toastBatchRendering: (n) => `Batch rendering ${n} long cards...`,
+          toastBatchSaved: (n) => `Successfully saved ${n} long cards to Downloads!`,
+          toastGenerated: (n) => `Successfully generated ${n} long cards!`,
+          toastThemeSwitched: (t) => `Theme switched to: ${t === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}`,
+        },
+        zh: {
+          appTitle: 'Antigravity 会话长图分享',
+          badgeRetina: '750px 高清卡片',
+          badgePaging: '超长自动分页 (单张≤4000px)',
+          badgePagingTitle: '内容过长时自动分页切片，单张≤4000px 杜绝微信压缩模糊，内容零丢失',
+          themeAuto: '🌓 跟随系统',
+          themeDark: '🌙 暗黑风格',
+          themeLight: '☀️ 明亮风格',
+          themeTitle: '切换整体界面与长图卡片的全局风格',
+          btnRefresh: '🔄 刷新',
+          btnRefreshTitle: '刷新会话列表',
+          btnReload: '⚡ 重载页面',
+          btnReloadTitle: '重新加载最新前端代码',
+          loadingConvs: '正在载入会话列表...',
+          noConvs: '未找到有效主会话',
+          loadConvsFail: '加载会话列表失败: ',
+          stepsSuffix: '步',
+          parsingTurns: '正在清洗与解析会话问答记录...',
+          noTurns: '该会话暂无有效对话轮次',
+          selectAll: '全选',
+          clearAll: '全不选',
+          last3Turns: '最近 3 轮',
+          btnGenerate: '⚡ 生成长图卡片',
+          btnGenerating: '⏳ 正在测量排版...',
+          roleUser: '👤 用户',
+          roleAi: '🤖 AI',
+          noPlainText: '(无纯文本)',
+          summaryText: (n) => `已智能切片为 ${n} 张长图卡片 (严格受控于 4,000px 安全红线)`,
+          btnDownloadAll: '📦 打包下载全量 PNG',
+          btnDownloadingAll: '⏳ 正在全量导出并保存...',
+          cardNum: (idx, total) => `卡片 <b>#${idx}</b> / 共 ${total} 张`,
+          btnCopyCard: '📋 复制长图 (微信直发)',
+          btnCopyingCard: '⏳ 渲染复制中...',
+          btnSaveCard: '💾 保存 PNG',
+          brandSub: 'Antigravity AI Agent 对话分享',
+          generatedTime: '生成时间: ',
+          retinaSub: '高清 750px · 无损渲染',
+          senderUser: '用户提问',
+          senderAi: 'Antigravity AI',
+          continuedTop: '(接上张卡片)',
+          continuedBottom: '(未完待续，请查看下张卡片...)',
+          footerLeft: '由 Antigravity 智能体系统原生驱动',
+          footerRight: '安全无损 · 零 CDN 外链',
+          toastCopied: '长图已成功复制到系统剪贴板！可直接在微信 Ctrl+V 发送',
+          toastCopyFail: '复制长图失败: ',
+          toastSavedSingle: '已成功保存到 Downloads 目录并自动唤起资源管理器！',
+          toastSaveFail: '保存失败: ',
+          toastRendering: '正在渲染导出图片...',
+          toastExportFail: '导出失败: ',
+          toastBatchRendering: (n) => `正在批量渲染 ${n} 张长图卡片...`,
+          toastBatchSaved: (n) => `成功将 ${n} 张长图全量保存至 Downloads 目录！`,
+          toastGenerated: (n) => `成功生成 ${n} 张长图卡片！`,
+          toastThemeSwitched: (t) => `全局风格已切换为: ${t === 'dark' ? '🌙 暗黑风格' : '☀️ 明亮风格'}`,
+        }
+      };
+
+      let currentLang = 'en';
+      try {
+        const savedLang = localStorage.getItem('antigravity_chat_share_lang');
+        if (savedLang === 'en' || savedLang === 'zh') {
+          currentLang = savedLang;
+        }
+      } catch (e) {}
+
+      function t(key, ...args) {
+        const dict = I18N[currentLang] || I18N.en;
+        const val = dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
+        return typeof val === 'function' ? val(...args) : val;
+      }
+
+      function applyLanguage(lang) {
+        currentLang = lang;
+        try { localStorage.setItem('antigravity_chat_share_lang', lang); } catch (e) {}
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+        if (langSelect) langSelect.value = lang;
+
+        if (uiAppTitle) uiAppTitle.textContent = t('appTitle');
+        if (uiBadgeRetina) uiBadgeRetina.textContent = t('badgeRetina');
+        if (uiBadgePaging) {
+          uiBadgePaging.textContent = t('badgePaging');
+          uiBadgePaging.title = t('badgePagingTitle');
+        }
+
+        if (cardThemeSelect && cardThemeSelect.options.length >= 3) {
+          cardThemeSelect.options[0].textContent = t('themeAuto');
+          cardThemeSelect.options[1].textContent = t('themeDark');
+          cardThemeSelect.options[2].textContent = t('themeLight');
+          cardThemeSelect.title = t('themeTitle');
+        }
+
+        if (btnRefreshConv) {
+          btnRefreshConv.textContent = t('btnRefresh');
+          btnRefreshConv.title = t('btnRefreshTitle');
+        }
+        if (btnReloadPage) {
+          btnReloadPage.textContent = t('btnReload');
+          btnReloadPage.title = t('btnReloadTitle');
+        }
+
+        if (btnSelectAll) btnSelectAll.textContent = t('selectAll');
+        if (btnSelectNone) btnSelectNone.textContent = t('clearAll');
+        if (btnSelectRecent3) btnSelectRecent3.textContent = t('last3Turns');
+        if (btnGenerate) btnGenerate.innerHTML = t('btnGenerate');
+        if (btnDownloadAll) btnDownloadAll.innerHTML = t('btnDownloadAll');
+
+        updateSelectedCount();
+
+        // 刷新会话下拉列表文本
+        if (currentConversations.length > 0 && convSelect) {
+          const curVal = convSelect.value;
+          convSelect.innerHTML = currentConversations.map((c) => {
+            const timeStr = new Date(c.last_modified_time).toLocaleString(currentLang === 'zh' ? 'zh-CN' : 'en-US', { hour12: false });
+            const title = c.title || c.preview || (currentLang === 'zh' ? '无标题会话' : 'Untitled Conversation');
+            return `<option value="${c.conversation_id}">${timeStr} · ${title.slice(0, 32)} (${c.step_count || 0} ${t('stepsSuffix')})</option>`;
+          }).join('');
+          if (curVal) convSelect.value = curVal;
+        }
+
+        // 刷新当前复选列表的角色标签
+        document.querySelectorAll('.turn-item').forEach(item => {
+          const idx = parseInt(item.getAttribute('data-index'), 10);
+          const m = currentMessages[idx];
+          if (m) {
+            const roleTag = item.querySelector('.turn-role-tag');
+            if (roleTag) roleTag.textContent = m.role === 'user' ? t('roleUser') : t('roleAi');
+          }
+        });
+      }
 
       // 全局主题驱动函数（界面与长图卡片同步换肤）
       function applyTheme(mode) {
@@ -1110,28 +1305,28 @@
 
       // 1. 加载主会话列表
       async function loadConversations() {
-        convSelect.innerHTML = '<option value="">正在载入会话列表...</option>';
+        convSelect.innerHTML = `<option value="">${t('loadingConvs')}</option>`;
         try {
           const res = await callApi('/api/conversations');
-          if (!res.success) throw new Error(res.error || '获取会话失败');
+          if (!res.success) throw new Error(res.error || 'Failed to fetch conversations');
           currentConversations = res.conversations || [];
           if (currentConversations.length === 0) {
-            convSelect.innerHTML = '<option value="">未找到有效主会话</option>';
+            convSelect.innerHTML = `<option value="">${t('noConvs')}</option>`;
             turnsBox.style.display = 'none';
             return;
           }
-          convSelect.innerHTML = currentConversations.map((c, i) => {
-            const timeStr = new Date(c.last_modified_time).toLocaleString('zh-CN', { hour12: false });
-            const title = c.title || c.preview || '无标题会话';
-            return `<option value="${c.conversation_id}">${timeStr} · ${title.slice(0, 32)} (共${c.step_count || 0}步)</option>`;
+          convSelect.innerHTML = currentConversations.map((c) => {
+            const timeStr = new Date(c.last_modified_time).toLocaleString(currentLang === 'zh' ? 'zh-CN' : 'en-US', { hour12: false });
+            const title = c.title || c.preview || (currentLang === 'zh' ? '无标题会话' : 'Untitled Conversation');
+            return `<option value="${c.conversation_id}">${timeStr} · ${title.slice(0, 32)} (${c.step_count || 0} ${t('stepsSuffix')})</option>`;
           }).join('');
 
           // 默认选中第一个并加载
           onSelectConversation();
         } catch (err) {
           console.error('加载会话失败:', err);
-          convSelect.innerHTML = `<option value="">加载失败: ${err.message}</option>`;
-          showToast('加载会话列表失败: ' + err.message, 'error');
+          convSelect.innerHTML = `<option value="">Error: ${err.message}</option>`;
+          showToast(t('loadConvsFail') + err.message, 'error');
         }
       }
 
@@ -1140,20 +1335,20 @@
         const convId = convSelect.value;
         if (!convId) return;
         const curConv = currentConversations.find(c => c.conversation_id === convId);
-        currentTitle = curConv?.title || curConv?.preview || 'Antigravity 会话';
+        currentTitle = curConv?.title || curConv?.preview || (currentLang === 'zh' ? 'Antigravity 会话' : 'Antigravity Conversation');
 
-        turnsList.innerHTML = '<div style="padding:12px; text-align:center; color:#8f959e;">正在清洗与解析会话问答记录...</div>';
+        turnsList.innerHTML = `<div style="padding:12px; text-align:center; color:#8f959e;">${t('parsingTurns')}</div>`;
         turnsBox.style.display = 'block';
         previewSection.style.display = 'none';
 
         try {
           const res = await callApi('/api/conversation/messages', { conversationId: convId });
-          if (!res.success) throw new Error(res.error || '读取消息失败');
+          if (!res.success) throw new Error(res.error || 'Failed to read messages');
           currentMessages = res.messages || [];
 
           totalTurnsCount.textContent = currentMessages.length;
           if (currentMessages.length === 0) {
-            turnsList.innerHTML = '<div style="padding:12px; text-align:center; color:#8f959e;">该会话暂无有效对话轮次</div>';
+            turnsList.innerHTML = `<div style="padding:12px; text-align:center; color:#8f959e;">${t('noTurns')}</div>`;
             updateSelectedCount();
             return;
           }
@@ -1162,7 +1357,7 @@
           turnsList.innerHTML = currentMessages.map((m, idx) => {
             const isUser = m.role === 'user';
             const roleClass = isUser ? 'role-user' : 'role-assistant';
-            const roleLabel = isUser ? '👤 用户' : '🤖 AI';
+            const roleLabel = isUser ? t('roleUser') : t('roleAi');
             const cleanContent = m.content
               .replace(/<ADDITIONAL_METADATA>[\s\S]*?<\/ADDITIONAL_METADATA>/gi, '')
               .replace(/<USER_SETTINGS_CHANGE>[\s\S]*?<\/USER_SETTINGS_CHANGE>/gi, '')
@@ -1178,7 +1373,7 @@
                     <span class="turn-role-tag ${roleClass}">${roleLabel}</span>
                     <span style="font-size:11px; color:#8f959e;">#${idx + 1}</span>
                   </div>
-                  <div class="turn-preview">${previewText || '(无纯文本)'}</div>
+                  <div class="turn-preview">${previewText || t('noPlainText')}</div>
                 </div>
               </div>
             `;
@@ -1198,14 +1393,22 @@
           updateSelectedCount();
         } catch (err) {
           console.error('读取消息失败:', err);
-          turnsList.innerHTML = `<div style="padding:12px; text-align:center; color:#f53f3f;">读取失败: ${err.message}</div>`;
-          showToast('读取消息失败: ' + err.message, 'error');
+          turnsList.innerHTML = `<div style="padding:12px; text-align:center; color:#f53f3f;">Error: ${err.message}</div>`;
+          showToast('Failed to load messages: ' + err.message, 'error');
         }
       }
 
       function updateSelectedCount() {
         const checkedList = turnsList.querySelectorAll('input[type="checkbox"]:checked');
-        selectedTurnsCount.textContent = checkedList.length;
+        const count = checkedList.length;
+        if (selectedTurnsCount) selectedTurnsCount.textContent = count;
+        if (turnsCountText) {
+          if (currentLang === 'zh') {
+            turnsCountText.innerHTML = `共 <b id="totalTurnsCount">${currentMessages.length}</b> 轮问答，已选中 <b id="selectedTurnsCount" style="color:var(--primary);">${count}</b> 轮`;
+          } else {
+            turnsCountText.innerHTML = `<b id="totalTurnsCount">${currentMessages.length}</b> turns, <b id="selectedTurnsCount" style="color:var(--primary);">${count}</b> selected`;
+          }
+        }
       }
 
       // 快捷勾选操作
@@ -1228,6 +1431,11 @@
 
       btnRefreshConv.addEventListener('click', loadConversations);
       convSelect.addEventListener('change', onSelectConversation);
+      if (langSelect) {
+        langSelect.addEventListener('change', () => {
+          applyLanguage(langSelect.value);
+        });
+      }
 
       // 3. 测量沙箱与两级语义切片算法
       async function buildSlices(selectedMsgs) {
@@ -1244,7 +1452,7 @@
           const avatarClass = isUser ? 'avatar-user' : 'avatar-assistant';
           const avatarIcon = isUser ? '👤' : '🤖';
           const bubbleRoleClass = isUser ? 'bubble-user' : 'bubble-assistant';
-          const senderName = isUser ? '用户提问' : 'Antigravity AI';
+          const senderName = isUser ? t('senderUser') : t('senderAi');
           const parsedContent = sanitizeHtml(marked.parse(msg.content));
 
           return `
@@ -1305,19 +1513,19 @@
               const bubbleRoleClass = isUser ? 'bubble-user' : 'bubble-assistant';
               const avatarClass = isUser ? 'avatar-user' : 'avatar-assistant';
               const avatarIcon = isUser ? '👤' : '🤖';
-              const senderName = isUser ? '用户提问' : 'Antigravity AI';
+              const senderName = isUser ? t('senderUser') : t('senderAi');
 
               function wrapSubBubble(subInnerHtml, isContinuedTop = false, isContinuedBottom = false) {
                 const headerHtml = isContinuedTop ? `
                   <div class="bubble-header">
                     <div class="bubble-avatar ${avatarClass}">${avatarIcon}</div>
-                    <span>${senderName} <span class="code-slice-tag">(接上张卡片)</span></span>
+                    <span>${senderName} <span class="code-slice-tag">${t('continuedTop')}</span></span>
                   </div>` : `
                   <div class="bubble-header">
                     <div class="bubble-avatar ${avatarClass}">${avatarIcon}</div>
                     <span>${senderName}</span>
                   </div>`;
-                const footerTag = isContinuedBottom ? `<div class="code-slice-tag" style="margin-top:8px;">(未完待续，请查看下张卡片...)</div>` : '';
+                const footerTag = isContinuedBottom ? `<div class="code-slice-tag" style="margin-top:8px;">${t('continuedBottom')}</div>` : '';
                 return `
                   <div class="message-bubble ${bubbleRoleClass}">
                     ${headerHtml}
@@ -1438,16 +1646,16 @@
         }).filter(Boolean);
 
         btnGenerate.disabled = true;
-        btnGenerate.innerHTML = '⏳ 正在测量排版...';
+        btnGenerate.innerHTML = t('btnGenerating');
         cardsList.innerHTML = '';
         previewSection.style.display = 'block';
 
         try {
           const slices = await buildSlices(selectedMsgs);
           const totalCards = slices.length;
-          cardsSummaryText.textContent = `已智能切片为 ${totalCards} 张长图卡片 (严格受控于 4,000px 安全红线)`;
+          cardsSummaryText.textContent = t('summaryText', totalCards);
 
-          const nowTimeStr = new Date().toLocaleString('zh-CN', { hour12: false });
+          const nowTimeStr = new Date().toLocaleString(currentLang === 'zh' ? 'zh-CN' : 'en-US', { hour12: false });
 
           slices.forEach((sliceNodes, index) => {
             const cardWrapper = document.createElement('div');
@@ -1457,10 +1665,10 @@
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'card-actions';
             actionsDiv.innerHTML = `
-              <span>卡片 <b>#${index + 1}</b> / 共 ${totalCards} 张</span>
+              <span>${t('cardNum', index + 1, totalCards)}</span>
               <div class="btn-group">
-                <button class="btn btn-sm btn-copy-card" data-card-idx="${index}">📋 复制长图 (微信直发)</button>
-                <button class="btn btn-sm btn-download-card" data-card-idx="${index}">💾 保存 PNG</button>
+                <button class="btn btn-sm btn-copy-card" data-card-idx="${index}">${t('btnCopyCard')}</button>
+                <button class="btn btn-sm btn-download-card" data-card-idx="${index}">${t('btnSaveCard')}</button>
               </div>
             `;
 
@@ -1476,12 +1684,12 @@
                   <div class="brand-icon">⚡</div>
                   <div class="brand-text">
                     <h3>${currentTitle}</h3>
-                    <p>Antigravity AI Agent 对话分享</p>
+                    <p>${t('brandSub')}</p>
                   </div>
                 </div>
                 <div class="card-header-date">
-                  <div>生成时间: ${nowTimeStr}</div>
-                  <div style="font-size:11px; margin-top:2px; color:#3370ff;">高清 750px · 无损渲染</div>
+                  <div>${t('generatedTime')}${nowTimeStr}</div>
+                  <div style="font-size:11px; margin-top:2px; color:#3370ff;">${t('retinaSub')}</div>
                 </div>
               </div>
 
@@ -1492,9 +1700,9 @@
               <div class="card-footer">
                 <div class="footer-left">
                   <span>Card ${index + 1} / ${totalCards}</span>
-                  <div>由 Antigravity 智能体系统原生驱动</div>
+                  <div>${t('footerLeft')}</div>
                 </div>
-                <div>安全无损 · 零 CDN 外链</div>
+                <div>${t('footerRight')}</div>
               </div>
             `;
 
@@ -1511,13 +1719,13 @@
             });
           });
 
-          showToast(`成功生成 ${totalCards} 张长图卡片！`, 'success');
+          showToast(t('toastGenerated', totalCards), 'success');
         } catch (err) {
           console.error('生成卡片失败:', err);
-          showToast('生成卡片失败: ' + err.message, 'error');
+          showToast('Failed to generate cards: ' + err.message, 'error');
         } finally {
           btnGenerate.disabled = false;
-          btnGenerate.innerHTML = '⚡ 生成长图卡片';
+          btnGenerate.innerHTML = t('btnGenerate');
         }
       });
 
@@ -1571,28 +1779,28 @@
                   new ClipboardItem({ 'image/png': blob })
                 ]);
                 successA = true;
-                showToast('长图已成功复制到系统剪贴板！可直接在微信 Ctrl+V 发送', 'success');
+                showToast(t('toastCopied'), 'success');
               }
             } catch (errA) {
-              console.warn('通道 A 原生剪贴板受阻 (失焦或无权限)，启动通道 B 保底:', errA);
+              console.warn('Channel A clipboard blocked, falling back to Channel B:', errA);
             }
           }
 
           if (successA) return;
 
           // 通道 B：服务端 Base64 内存流 Win32 剪贴板保底
-          btn.innerHTML = '⚡ 写入系统剪贴板...';
+          btn.innerHTML = t('btnCopyingCard');
           const base64Data = canvas.toDataURL('image/png');
           const res = await callApi('/api/clipboard/write-image', { imageBase64: base64Data });
 
           if (res && res.success) {
-            showToast('长图已成功复制到系统剪贴板！可直接在微信 Ctrl+V 发送', 'success');
+            showToast(t('toastCopied'), 'success');
           } else {
-            throw new Error(res?.error || '剪贴板写入失败');
+            throw new Error(res?.error || 'Clipboard write failed');
           }
         } catch (err) {
-          console.error('复制长图失败:', err);
-          showToast('复制长图失败: ' + err.message, 'error');
+          console.error('Copy failed:', err);
+          showToast(t('toastCopyFail') + err.message, 'error');
         } finally {
           btn.disabled = false;
           btn.innerHTML = origText;
@@ -1602,7 +1810,7 @@
       // 6. 保存单张 PNG（通道 A 浏览器下载 + 通道 B 本地服务端物理写入 Downloads 目录）
       async function downloadCardImage(cardElement, index) {
         try {
-          showToast('正在渲染导出图片...', 'info');
+          showToast(t('toastRendering'), 'info');
           const canvas = await renderCardToCanvas(cardElement);
           const dataUrl = canvas.toDataURL('image/png');
           const filename = `antigravity-chat-part-${index + 1}-${Date.now()}.png`;
@@ -1621,13 +1829,13 @@
           });
 
           if (res.success) {
-            showToast(`已成功保存到 Downloads 目录并自动唤起资源管理器！`, 'success');
+            showToast(t('toastSavedSingle'), 'success');
           } else {
-            showToast(`保存失败: ${res.error || '未知错误'}`, 'error');
+            showToast(t('toastSaveFail') + (res.error || 'Unknown error'), 'error');
           }
         } catch (err) {
-          console.error('导出失败:', err);
-          showToast('导出失败: ' + err.message, 'error');
+          console.error('Export failed:', err);
+          showToast(t('toastExportFail') + err.message, 'error');
         }
       }
 
@@ -1636,8 +1844,8 @@
         const cards = cardsList.querySelectorAll('.share-card');
         if (cards.length === 0) return;
         btnDownloadAll.disabled = true;
-        btnDownloadAll.innerHTML = '⏳ 正在全量导出并保存...';
-        showToast(`正在批量渲染 ${cards.length} 张长图卡片...`, 'info');
+        btnDownloadAll.innerHTML = t('btnDownloadingAll');
+        showToast(t('toastBatchRendering', cards.length), 'info');
 
         try {
           const imagesToSave = [];
@@ -1660,16 +1868,16 @@
           // 服务端物理落盘
           const res = await callApi('/api/images/save', { images: imagesToSave });
           if (res.success) {
-            showToast(`成功将 ${res.savedCount} 张长图全量保存至 Downloads 目录！`, 'success');
+            showToast(t('toastBatchSaved', res.savedCount), 'success');
           } else {
-            throw new Error(res.error || '物理保存失败');
+            throw new Error(res.error || 'Physical save failed');
           }
         } catch (err) {
-          console.error('全量导出失败:', err);
-          showToast('全量导出失败: ' + err.message, 'error');
+          console.error('Batch export failed:', err);
+          showToast(t('toastExportFail') + err.message, 'error');
         } finally {
           btnDownloadAll.disabled = false;
-          btnDownloadAll.innerHTML = '📦 打包下载全量 PNG';
+          btnDownloadAll.innerHTML = t('btnDownloadAll');
         }
       });
 
@@ -1677,9 +1885,12 @@
       if (cardThemeSelect) {
         cardThemeSelect.addEventListener('change', () => {
           const actual = applyTheme(cardThemeSelect.value);
-          showToast(`全局风格已切换为: ${actual === 'dark' ? '🌙 暗黑风格' : '☀️ 明亮风格'}`, 'info');
+          showToast(t('toastThemeSwitched', actual), 'info');
         });
       }
+
+      // 初始化语言与主题
+      applyLanguage(currentLang);
 
       // 初始化全局主题
       let savedThemeMode = 'auto';
