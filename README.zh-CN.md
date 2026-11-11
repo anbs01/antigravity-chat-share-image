@@ -51,6 +51,35 @@
 
 ---
 
+## 📦 安装与配置
+
+### 方式一：官方插件商店一键安装（推荐 · 收录后即生效）
+官方插件商店审核收录后，无需离开编辑器即可一键完成安装：
+1. 打开 Antigravity IDE，在右侧侧边栏中切换至 **Plugins / Marketplace** 面板；
+2. 在搜索框中输入 `Chat to Image` 或 `会话长图`；
+3. 点击 **Install** 按钮即刻完成安装并自动加载。
+
+### 方式二：Git 命令行极速克隆（外部用户当前立即可用）
+在终端中执行以下一行命令，直接将插件克隆至本地插件目录：
+
+- **Windows (PowerShell)**:
+  ```powershell
+  git clone https://github.com/anbs01/antigravity-chat-share-image.git "$env:USERPROFILE\.gemini\config\plugins\chat-share-image"
+  ```
+- **macOS / Linux**:
+  ```bash
+  git clone https://github.com/anbs01/antigravity-chat-share-image.git ~/.gemini/config/plugins/chat-share-image
+  ```
+
+### 方式三：Release 压缩包离线解压安装
+1. 从 [GitHub Releases](https://github.com/anbs01/antigravity-chat-share-image/releases) 页面下载最新发布的源码包或 Release ZIP；
+2. 将压缩包解压至以下对应系统的插件目录：
+   - **Windows**: `%USERPROFILE%\.gemini\config\plugins\chat-share-image`
+   - **macOS / Linux**: `~/.gemini/config/plugins/chat-share-image`
+3. 重启或重新加载 Antigravity 即可。
+
+---
+
 ## 📖 使用指南
 
 1. **打开扩展**：

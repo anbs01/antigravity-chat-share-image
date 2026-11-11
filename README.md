@@ -51,6 +51,35 @@ After extensive coding and debugging sessions with AI assistants, sharing length
 
 ---
 
+## 📦 Installation
+
+### Method 1: Antigravity Marketplace (Recommended)
+Once approved and published to the official Agent Marketplace:
+1. Open Antigravity and navigate to the **Marketplace / Plugins** panel in the right sidebar.
+2. Search for `Chat to Image`.
+3. Click **Install** for instant activation.
+
+### Method 2: Quick Git Clone (Ready for use now)
+Run the following one-line command to install the plugin into your Antigravity plugins directory:
+
+- **Windows (PowerShell)**:
+  ```powershell
+  git clone https://github.com/anbs01/antigravity-chat-share-image.git "$env:USERPROFILE\.gemini\config\plugins\chat-share-image"
+  ```
+- **macOS / Linux**:
+  ```bash
+  git clone https://github.com/anbs01/antigravity-chat-share-image.git ~/.gemini/config/plugins/chat-share-image
+  ```
+
+### Method 3: Manual Installation via ZIP
+1. Download the latest release from the [GitHub Releases](https://github.com/anbs01/antigravity-chat-share-image/releases) page.
+2. Extract the archive into:
+   - **Windows**: `%USERPROFILE%\.gemini\config\plugins\chat-share-image`
+   - **macOS / Linux**: `~/.gemini/config/plugins/chat-share-image`
+3. Reload Antigravity to activate the extension.
+
+---
+
 ## 📖 Quick Start
 
 1. **Launch Extension**:
