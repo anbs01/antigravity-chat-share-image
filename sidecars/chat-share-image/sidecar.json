@@ -1,0 +1,17 @@
+{
+  "display_name": "会话长图分享",
+  "description": "生成 Antigravity 会话问答卡片长图，支持代码语法高亮与一键写入系统剪贴板",
+  "command": "node",
+  "args": ["server.mjs"],
+  "restart_policy": "always",
+  "has_web_ui": true,
+  "ui_config": {
+    "views": [
+      {
+        "title": "长图分享",
+        "entrypoint": "SIDECAR_UI_ENTRYPOINT_AUX_PANE",
+        "path": "/"
+      }
+    ]
+  }
+}

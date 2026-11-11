@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antigravity 会话长图分享</title>
+  <script src="/preload.js"></script>
+  <link rel="stylesheet" href="/highlight-github-dark.min.css">
+  <script src="/marked.min.js"></script>
+  <script src="/highlight.min.js"></script>
+  <script src="/html2canvas.min.js"></script>
+  <style>
+    :root, [data-theme="light"] {
+      --primary: #3370ff;
+      --primary-hover: #2858d4;
+      --primary-active: #1e44a8;
+      --bg: #f4f5f9;
+      --card-bg: #ffffff;
+      --text-main: #1f2329;
+      --text-sub: #646a73;
+      --border: #dee0e3;
+      --user-bubble: #e8f3ff;
+      --user-border: #b3d5ff;
+      --assistant-bubble: #ffffff;
+      --assistant-border: #e4e6eb;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+    }
+
+    /* 全局暗黑主题（由 data-theme="dark" 全链路驱动：界面与长图卡片同步变暗） */
+    [data-theme="dark"] {
+      --bg: #1e1e1e !important;
+      --card-bg: #252526 !important;
+      --text-main: #cccccc !important;
+      --text-sub: #999999 !important;
+      --border: #3c3c3c !important;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    }
+    [data-theme="dark"] select {
+      background: #2d2d2d !important;
+      color: #cccccc !important;
+      border-color: #3c3c3c !important;
+    }
+    [data-theme="dark"] .btn {
+      background: #2d2d2d !important;
+      color: #cccccc !important;
+      border-color: #3c3c3c !important;
+    }
+    [data-theme="dark"] .btn:hover {
+      background: #383838 !important;
+      border-color: #4c4c4c !important;
+    }
+    [data-theme="dark"] .btn-primary {
+      background: var(--primary) !important;
+      color: #ffffff !important;
+      border: none !important;
+    }
+    [data-theme="dark"] .turns-list {
+      background: #181818 !important;
+      border-color: #333333 !important;
+    }
+    [data-theme="dark"] .turn-item {
+      background: #252526 !important;
+      border-color: #333333 !important;
+    }
+    [data-theme="dark"] .turn-item:hover {
+      background: #2d3036 !important;
+    }
+    [data-theme="dark"] .turn-preview {
+      color: #999999 !important;
+    }
+    [data-theme="dark"] .turns-toolbar {
+      color: #cccccc !important;
+    }
+    [data-theme="dark"] .header-title h2 {
+      color: #e5e5e5 !important;
+    }
+    [data-theme="dark"] .tag {
+      background: #1e293b !important;
+    }
+    [data-theme="dark"] .control-panel {
+      border: 1px solid #333333;
+    }
+    [data-theme="dark"] .cards-overview-bar {
+      background: var(--card-bg) !important;
+      color: #cccccc !important;
+      border: 1px solid #333333;
+    }
+    [data-theme="dark"] .card-actions {
+      color: #cccccc !important;
+    }
+
+    /* 全局明亮主题显式覆盖（无论操作系统如何，切换后全界面彻底转亮） */
+    [data-theme="light"] select {
+      background: #ffffff !important;
+      color: #1f2329 !important;
+      border-color: #dee0e3 !important;
+    }
+    [data-theme="light"] .btn {
+      background: #ffffff !important;
+      color: #1f2329 !important;
+      border-color: #dee0e3 !important;
+    }
+    [data-theme="light"] .btn:hover {
+      background: #f7f8fa !important;
+    }
+    [data-theme="light"] .turns-list {
+      background: #fafbfc !important;
+      border-color: #dee0e3 !important;
+    }
+    [data-theme="light"] .turn-item {
+      background: #ffffff !important;
+      border-color: #edf0f5 !important;
+    }
+    [data-theme="light"] .turn-item:hover {
+      background: #f2f7ff !important;
+    }
+    [data-theme="light"] .turn-preview {
+      color: #646a73 !important;
+    }
+    [data-theme="light"] .turns-toolbar {
+      color: #1f2329 !important;
+    }
+    [data-theme="light"] .header-title h2 {
+      color: #1f2329 !important;
+    }
+    [data-theme="light"] .tag {
+      background: #e8f3ff !important;
+      color: var(--primary) !important;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100%;
+      min-height: 100vh !important;
+      box-sizing: border-box;
+      background-color: var(--bg) !important;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg) !important;
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 12px;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 顶部控制面板 */
+    .control-panel {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      margin-bottom: 12px;
+    }
+
+    .header-title h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .header-title .tag {
+      font-size: 12px;
+      background: #e8f3ff;
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .form-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    select, button, input {
+      font-family: inherit;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      outline: none;
+    }
+
+    select {
+      flex: 1;
+      padding: 8px 12px;
+      background: #ffffff;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    select:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      min-height: 38px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      user-select: none;
+      background: #ffffff;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .btn:hover {
+      background: #f7f8fa;
+      border-color: #c9cdd4;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+      background: #eaedf1;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-primary:active {
+      background: var(--primary-active);
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      min-height: 28px;
+      font-size: 12px;
+    }
+
+    /* 问答轮次勾选区 */
+    .turns-container {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+      margin-top: 12px;
+      border-top: 1px solid #f0f1f5;
+      padding-top: 12px;
+    }
+
+    .turns-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .turns-list {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      overflow-x: hidden !important;
+      min-height: 360px !important;
+      max-height: min(65vh, 600px) !important;
+      overflow-y: auto !important;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fafbfc;
+      padding: 8px;
+      gap: 6px !important;
+    }
+
+    .turn-item {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: flex-start !important;
+      gap: 10px !important;
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      padding: 8px 12px !important;
+      border-radius: 6px;
+      background: #ffffff;
+      margin-bottom: 0 !important;
+      border: 1px solid #edf0f5;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .turn-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .turn-item:hover {
+      background: #f2f7ff;
+    }
+
+    .turn-item input[type="checkbox"] {
+      margin-top: 3px;
+      cursor: pointer;
+    }
+
+    .turn-info {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    .turn-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .turn-role-tag {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .role-user {
+      background: #e8f3ff;
+      color: #3370ff;
+    }
+
+    .role-assistant {
+      background: #eafff0;
+      color: #00b42a;
+    }
+
+    .turn-preview {
+      color: var(--text-sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-all;
+    }
+
+    /* 离线沙箱容器 (宽度固定 750px，完全隐藏且不影响视口) */
+    #measure-sandbox {
+      position: absolute;
+      left: -99999px;
+      top: 0;
+      width: 750px;
+      min-width: 750px;
+      max-width: 750px;
+      visibility: hidden;
+      pointer-events: none;
+      box-sizing: border-box;
+      padding: 24px;
+      font-family: var(--font-family);
+      line-height: 1.6;
+    }
+
+    /* 卡片瀑布流预览区域 */
+    .preview-section {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      margin-top: 20px;
+    }
+
+    .cards-overview-bar {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      color: var(--text-main);
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      font-size: 14px;
+    }
+
+    .card-wrapper {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-actions {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 8px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    /* 侧边栏垂直自适应展示卡片（导出时由离屏引擎拉伸为 750px） */
+    .share-card {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-sizing: border-box;
+      padding: 20px;
+      position: relative;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* 经典明亮卡片风格 (Light) - 纯白底色，强制深黑高对比文字，彻底根除发白变灰 */
+    .share-card.theme-light, #measure-sandbox.theme-light {
+      background: #ffffff !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+      border: 1px solid #edf0f5 !important;
+    }
+    .share-card.theme-light .card-header {
+      border-bottom: 2px solid #f0f2f5 !important;
+    }
+    .share-card.theme-light .brand-text h3 {
+      color: #1f2329 !important;
+    }
+    .share-card.theme-light .brand-text p {
+      color: #646a73 !important;
+    }
+    .share-card.theme-light .card-header-date {
+      color: #8f959e !important;
+    }
+    .share-card.theme-light .bubble-user .bubble-content {
+      background: #e8f3ff !important;
+      border: 1px solid #b3d5ff !important;
+      color: #0c2d6b !important;
+      font-weight: 500;
+    }
+    .share-card.theme-light .bubble-assistant .bubble-content {
+      background: #ffffff !important;
+      border: 1px solid #e4e6eb !important;
+      color: #1f2329 !important; /* 强制极深灰黑，保证 100% 锐利清晰 */
+    }
+    .share-card.theme-light .bubble-content p,
+    .share-card.theme-light .bubble-content li,
+    .share-card.theme-light .bubble-content td,
+    .share-card.theme-light .bubble-content th {
+      color: #1f2329 !important;
+    }
+    .share-card.theme-light .bubble-content strong,
+    .share-card.theme-light .bubble-content b {
+      color: #000000 !important;
+      font-weight: 700 !important;
+    }
+    .share-card.theme-light .bubble-content h1,
+    .share-card.theme-light .bubble-content h2,
+    .share-card.theme-light .bubble-content h3,
+    .share-card.theme-light .bubble-content h4 {
+      color: #111827 !important;
+    }
+    .share-card.theme-light .bubble-content blockquote {
+      border-left: 4px solid #3370ff !important;
+      background: #f7f9fc !important;
+      color: #4e5969 !important;
+    }
+    .share-card.theme-light .bubble-content table {
+      border: 1px solid #e5e6eb !important;
+    }
+    .share-card.theme-light .bubble-content th,
+    .share-card.theme-light .bubble-content td {
+      border: 1px solid #e5e6eb !important;
+    }
+    .share-card.theme-light .bubble-content th {
+      background: #f2f3f5 !important;
+      font-weight: 600 !important;
+    }
+    .share-card.theme-light .bubble-content :not(pre) > code {
+      background: #f2f3f5 !important;
+      color: #d83b01 !important;
+    }
+    .share-card.theme-light .card-footer {
+      border-top: 1px dashed #e5e6eb !important;
+      color: #8f959e !important;
+    }
+    .share-card.theme-light .footer-left span {
+      background: #f2f3f5 !important;
+      color: #4e5969 !important;
+    }
+    .share-card.theme-light .bubble-header,
+    .share-card.theme-light .bubble-header span {
+      color: #4e5969 !important;
+    }
+
+    /* 酷炫暗黑卡片风格 (Dark) - 纯正黑曜石底色，超高对比亮白文字与科技蓝气泡 */
+    .share-card.theme-dark, #measure-sandbox.theme-dark {
+      background: #18191c !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+      border: 1px solid #2d3036 !important;
+    }
+    .share-card.theme-dark .card-header {
+      border-bottom: 2px solid #2d3036 !important;
+    }
+    .share-card.theme-dark .brand-text h3 {
+      color: #ffffff !important;
+    }
+    .share-card.theme-dark .brand-text p {
+      color: #94a3b8 !important;
+    }
+    .share-card.theme-dark .card-header-date {
+      color: #94a3b8 !important;
+    }
+    .share-card.theme-dark .bubble-user .bubble-content {
+      background: #1e293b !important;
+      border: 1px solid #334155 !important;
+      color: #93c5fd !important; /* 清透高亮蓝 */
+      font-weight: 500;
+    }
+    .share-card.theme-dark .bubble-assistant .bubble-content {
+      background: #22242a !important;
+      border: 1px solid #373a42 !important;
+      color: #f1f5f9 !important; /* 超高对比度亮白正文 */
+    }
+    .share-card.theme-dark .bubble-content p,
+    .share-card.theme-dark .bubble-content li,
+    .share-card.theme-dark .bubble-content td,
+    .share-card.theme-dark .bubble-content th {
+      color: #f1f5f9 !important;
+    }
+    .share-card.theme-dark .bubble-content strong,
+    .share-card.theme-dark .bubble-content b {
+      color: #ffffff !important;
+      font-weight: 700 !important;
+    }
+    .share-card.theme-dark .bubble-content h1,
+    .share-card.theme-dark .bubble-content h2,
+    .share-card.theme-dark .bubble-content h3,
+    .share-card.theme-dark .bubble-content h4 {
+      color: #ffffff !important;
+    }
+    .share-card.theme-dark .bubble-content blockquote {
+      border-left: 4px solid #3b82f6 !important;
+      background: #1e293b !important;
+      color: #cbd5e1 !important;
+    }
+    .share-card.theme-dark .bubble-content table {
+      border: 1px solid #373a42 !important;
+    }
+    .share-card.theme-dark .bubble-content th,
+    .share-card.theme-dark .bubble-content td {
+      border: 1px solid #373a42 !important;
+    }
+    .share-card.theme-dark .bubble-content th {
+      background: #2b2d35 !important;
+      font-weight: 600 !important;
+    }
+    .share-card.theme-dark .bubble-content :not(pre) > code {
+      background: #2d3036 !important;
+      color: #f87171 !important;
+    }
+    .share-card.theme-dark .card-footer {
+      border-top: 1px dashed #373a42 !important;
+      color: #94a3b8 !important;
+    }
+    .share-card.theme-dark .footer-left span {
+      background: #2b2d35 !important;
+      color: #cbd5e1 !important;
+    }
+    .share-card.theme-dark .bubble-header,
+    .share-card.theme-dark .bubble-header span {
+      color: #cbd5e1 !important;
+    }
+
+    /* 卡片顶部装饰 Header */
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #f0f2f5;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #3370ff 0%, #7b61ff 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .brand-text h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .brand-text p {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .card-header-date {
+      font-size: 12px;
+      color: #8f959e;
+      text-align: right;
+    }
+
+    /* 消息气泡渲染 */
+    .message-bubble {
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .bubble-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .bubble-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .avatar-user {
+      background: #3370ff;
+      color: #ffffff;
+    }
+
+    .avatar-assistant {
+      background: #00b42a;
+      color: #ffffff;
+    }
+
+    .bubble-content {
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.7;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .bubble-user .bubble-content {
+      background: var(--user-bubble);
+      border: 1px solid var(--user-border);
+      color: #0c2d6b;
+      font-weight: 500;
+    }
+
+    .bubble-assistant .bubble-content {
+      background: var(--assistant-bubble);
+      border: 1px solid var(--assistant-border);
+      color: var(--text-main);
+    }
+
+    /* Markdown 元素美化 */
+    .bubble-content p {
+      margin-bottom: 10px;
+    }
+
+    .bubble-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .bubble-content h1, .bubble-content h2, .bubble-content h3, .bubble-content h4 {
+      margin-top: 14px;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #1f2329;
+    }
+
+    .bubble-content h1 { font-size: 18px; }
+    .bubble-content h2 { font-size: 16px; }
+    .bubble-content h3 { font-size: 15px; }
+
+    .bubble-content ul, .bubble-content ol {
+      margin-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    .bubble-content li {
+      margin-bottom: 4px;
+    }
+
+    .bubble-content blockquote {
+      border-left: 4px solid #3370ff;
+      padding: 8px 12px;
+      background: #f7f9fc;
+      color: #4e5969;
+      margin: 10px 0;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .bubble-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+
+    .bubble-content th, .bubble-content td {
+      border: 1px solid #e5e6eb;
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .bubble-content th {
+      background: #f2f3f5;
+      font-weight: 600;
+    }
+
+    /* 代码块与高亮样式 */
+    .bubble-content pre {
+      background: #1e1e24 !important;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 12px 0;
+      overflow-x: auto;
+      word-break: break-word;
+      white-space: pre-wrap;
+      position: relative;
+    }
+
+    .bubble-content code {
+      font-family: "JetBrains Mono", Consolas, Monaco, "Courier New", monospace;
+      font-size: 13px;
+    }
+
+    .bubble-content :not(pre) > code {
+      background: #f2f3f5;
+      color: #d83b01;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .code-slice-tag {
+      display: inline-block;
+      font-size: 11px;
+      color: #ff9800;
+      padding: 2px 0;
+      font-style: italic;
+    }
+
+    /* 卡片底部装饰 Footer */
+    .card-footer {
+      border-top: 1px dashed #e5e6eb;
+      padding-top: 14px;
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #8f959e;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .footer-left span {
+      background: #f2f3f5;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      color: #4e5969;
+    }
+
+    /* Toast 提示框 */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      animation: fadeInDown 0.25s ease, fadeOutUp 0.25s ease 2.75s forwards;
+      pointer-events: auto;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    .toast-success { background: #00b42a; color: #ffffff; }
+    .toast-error { background: #f53f3f; color: #ffffff; }
+    .toast-info { background: #3370ff; color: #ffffff; }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOutUp {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部控制面板 -->
+  <div class="control-panel">
+    <div class="header-title">
+      <h2>Antigravity 会话长图分享</h2>
+      <span class="tag">750px 高清卡片</span>
+      <span class="tag" style="background:#eafff0; color:#00b42a;" title="内容过长时自动分页切片，单张≤4000px 杜绝微信压缩模糊，内容零丢失">超长自动分页 (单张≤4000px)</span>
+    </div>
+
+    <!-- 会话选择与卡片风格配置 -->
+    <div class="form-group">
+      <select id="convSelect">
+        <option value="">正在载入会话列表...</option>
+      </select>
+      <select id="cardThemeSelect" style="max-width: 135px;" title="切换整体界面与长图卡片的全局风格">
+        <option value="auto">🌓 跟随系统</option>
+        <option value="dark">🌙 暗黑风格</option>
+        <option value="light">☀️ 明亮风格</option>
+      </select>
+      <button id="btnRefreshConv" class="btn" title="刷新会话列表">🔄 刷新</button>
+      <button id="btnReloadPage" class="btn" onclick="window.location.reload(true)" title="重新加载最新前端代码">⚡ 重载页面</button>
+    </div>
+
+    <!-- 问答轮次勾选与快捷工具条 -->
+    <div class="turns-container" id="turnsBox" style="display: none;">
+      <div class="turns-toolbar">
+        <div>
+          <span>共 <b id="totalTurnsCount">0</b> 轮问答，已选中 <b id="selectedTurnsCount" style="color:var(--primary);">0</b> 轮</span>
+        </div>
+        <div class="btn-group">
+          <button id="btnSelectAll" class="btn btn-sm">全选</button>
+          <button id="btnSelectNone" class="btn btn-sm">全不选</button>
+          <button id="btnSelectRecent3" class="btn btn-sm">最近 3 轮</button>
+          <button id="btnGenerate" class="btn btn-sm btn-primary">⚡ 生成长图卡片</button>
+        </div>
+      </div>
+      <div class="turns-list" id="turnsList"></div>
+    </div>
+  </div>
+
+  <!-- 离线几何测量沙箱 (严格锁定 750px，脱机不可见) -->
+  <div id="measure-sandbox"></div>
+
+  <!-- 卡片瀑布流预览区域 -->
+  <div class="preview-section" id="previewSection" style="display: none;">
+    <div class="cards-overview-bar">
+      <span id="cardsSummaryText">已生成 0 张长图卡片</span>
+      <div class="btn-group">
+        <button id="btnDownloadAll" class="btn btn-sm">📦 打包下载全量 PNG</button>
+      </div>
+    </div>
+    <div id="cardsList" style="display: flex; flex-direction: column; gap: 32px;"></div>
+  </div>
+
+  <!-- 全局 Toast 容器 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    (function() {
+      // 核心常数
+      const MAX_CARD_SAFE_HEIGHT = 3700; // 黄金熔断墙高度阈值（留 300px 给头部与底部，总高严格 <= 4000px）
+      const MAX_CODE_BLOCK_SAFE_HEIGHT = 3200; // 超长代码块拆分阈值
+
+      // DOM 元素引用
+      const convSelect = document.getElementById('convSelect');
+      const cardThemeSelect = document.getElementById('cardThemeSelect');
+      const btnRefreshConv = document.getElementById('btnRefreshConv');
+      const turnsBox = document.getElementById('turnsBox');
+      const turnsList = document.getElementById('turnsList');
+      const totalTurnsCount = document.getElementById('totalTurnsCount');
+      const selectedTurnsCount = document.getElementById('selectedTurnsCount');
+      const btnSelectAll = document.getElementById('btnSelectAll');
+      const btnSelectNone = document.getElementById('btnSelectNone');
+      const btnSelectRecent3 = document.getElementById('btnSelectRecent3');
+      const btnGenerate = document.getElementById('btnGenerate');
+      const previewSection = document.getElementById('previewSection');
+      const cardsSummaryText = document.getElementById('cardsSummaryText');
+      const cardsList = document.getElementById('cardsList');
+      const btnDownloadAll = document.getElementById('btnDownloadAll');
+      const sandbox = document.getElementById('measure-sandbox');
+      const toastContainer = document.getElementById('toastContainer');
+
+      // 全局主题驱动函数（界面与长图卡片同步换肤）
+      function applyTheme(mode) {
+        let actual = mode;
+        if (mode === 'auto') {
+          actual = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', actual);
+
+        // 联动长图卡片样式
+        document.querySelectorAll('.share-card').forEach(el => {
+          el.className = `share-card theme-${actual}`;
+        });
+
+        if (sandbox) sandbox.className = `theme-${actual}`;
+        try { localStorage.setItem('antigravity_theme_mode', mode); } catch (e) {}
+        return actual;
+      }
+
+      // 获取当前实际生效的卡片明暗风格 ('dark' | 'light')
+      function getEffectiveCardTheme() {
+        return document.documentElement.getAttribute('data-theme') || 'light';
+      }
+
+      // 状态缓存
+      let currentConversations = [];
+      let currentMessages = [];
+      let currentTitle = '会话分享';
+
+      // HTML 转义防御函数（根绝未闭合 XML/HTML 标签导致 DOM 树崩溃与排版坍塌）
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // 配置 marked 与 highlight.js
+      if (window.marked) {
+        marked.setOptions({
+          gfm: true,
+          breaks: true,
+          highlight: function(code, lang) {
+            if (lang && window.hljs && hljs.getLanguage(lang)) {
+              try {
+                return hljs.highlight(code, { language: lang }).value;
+              } catch (e) {}
+            }
+            if (window.hljs) {
+              return hljs.highlightAuto(code).value;
+            }
+            return code;
+          }
+        });
+      }
+
+      // 单行字符安全切片（代理对 Surrogate Pair 感知，严禁腰斩 Emoji 与生僻字）
+      function safeSliceLine(line, maxLen = 500) {
+        if (!line || line.length <= maxLen) return [line || ''];
+        const result = [];
+        let start = 0;
+        while (start < line.length) {
+          let end = start + maxLen;
+          if (end >= line.length) {
+            result.push(line.slice(start));
+            break;
+          }
+          const code = line.charCodeAt(end - 1);
+          if (code >= 0xD800 && code <= 0xDBFF) {
+            end++;
+          }
+          result.push(line.slice(start, end));
+          start = end;
+        }
+        return result;
+      }
+
+      // 零依赖前端 DOM 消毒防御 XSS 与恶意提示词注入
+      function sanitizeHtml(rawHtml) {
+        if (!rawHtml || typeof rawHtml !== 'string') return '';
+        const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
+        const dangerousTags = [
+          'script', 'style', 'iframe', 'frame', 'object', 'embed',
+          'link', 'meta', 'base', 'template'
+        ];
+        dangerousTags.forEach(tag => {
+          doc.body.querySelectorAll(tag).forEach(el => el.remove());
+        });
+
+        const dangerAttrs = new Set(['href', 'src', 'action', 'formaction', 'xlink:href']);
+        doc.body.querySelectorAll('*').forEach(el => {
+          for (const attr of Array.from(el.attributes)) {
+            const name = attr.name.toLowerCase();
+            const rawVal = attr.value;
+            // 剥离空白符与所有控制符 (0x00 - 0x1F) 杜绝混淆绕过
+            const normalized = rawVal.replace(/[\s\x00-\x1F]/g, '').toLowerCase();
+
+            if (name.startsWith('on')) {
+              el.removeAttribute(attr.name);
+            } else if (dangerAttrs.has(name)) {
+              if (
+                normalized.startsWith('javascript:') ||
+                normalized.startsWith('vbscript:') ||
+                normalized.startsWith('data:text/html')
+              ) {
+                el.removeAttribute(attr.name);
+              }
+            }
+          }
+        });
+        return doc.body.innerHTML;
+      }
+
+      // 统一调用 Sidecar API 适配器（防非 JSON/404 文本穿透崩溃）
+      async function callApi(endpoint, data = {}) {
+        const fetchFn = (window.sidecar && window.sidecar.fetch) ? window.sidecar.fetch : fetch;
+        const resp = await fetchFn(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const rawText = await resp.text();
+        try {
+          return JSON.parse(rawText);
+        } catch (e) {
+          if (!resp.ok) {
+            throw new Error(`接口响应异常 [HTTP ${resp.status}]: ${rawText.slice(0, 120) || resp.statusText}`);
+          }
+          throw new Error(`返回格式非有效JSON: ${rawText.slice(0, 120)}`);
+        }
+      }
+
+      // 消息提示组件
+      function showToast(text, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = text;
+        toastContainer.appendChild(toast);
+        setTimeout(() => {
+          if (toast.parentElement) toast.parentElement.removeChild(toast);
+        }, 3000);
+      }
+
+      // 1. 加载主会话列表
+      async function loadConversations() {
+        convSelect.innerHTML = '<option value="">正在载入会话列表...</option>';
+        try {
+          const res = await callApi('/api/conversations');
+          if (!res.success) throw new Error(res.error || '获取会话失败');
+          currentConversations = res.conversations || [];
+          if (currentConversations.length === 0) {
+            convSelect.innerHTML = '<option value="">未找到有效主会话</option>';
+            turnsBox.style.display = 'none';
+            return;
+          }
+          convSelect.innerHTML = currentConversations.map((c, i) => {
+            const timeStr = new Date(c.last_modified_time).toLocaleString('zh-CN', { hour12: false });
+            const title = c.title || c.preview || '无标题会话';
+            return `<option value="${c.conversation_id}">${timeStr} · ${title.slice(0, 32)} (共${c.step_count || 0}步)</option>`;
+          }).join('');
+
+          // 默认选中第一个并加载
+          onSelectConversation();
+        } catch (err) {
+          console.error('加载会话失败:', err);
+          convSelect.innerHTML = `<option value="">加载失败: ${err.message}</option>`;
+          showToast('加载会话列表失败: ' + err.message, 'error');
+        }
+      }
+
+      // 2. 切换并加载选中会话的有效问答轮次
+      async function onSelectConversation() {
+        const convId = convSelect.value;
+        if (!convId) return;
+        const curConv = currentConversations.find(c => c.conversation_id === convId);
+        currentTitle = curConv?.title || curConv?.preview || 'Antigravity 会话';
+
+        turnsList.innerHTML = '<div style="padding:12px; text-align:center; color:#8f959e;">正在清洗与解析会话问答记录...</div>';
+        turnsBox.style.display = 'block';
+        previewSection.style.display = 'none';
+
+        try {
+          const res = await callApi('/api/conversation/messages', { conversationId: convId });
+          if (!res.success) throw new Error(res.error || '读取消息失败');
+          currentMessages = res.messages || [];
+
+          totalTurnsCount.textContent = currentMessages.length;
+          if (currentMessages.length === 0) {
+            turnsList.innerHTML = '<div style="padding:12px; text-align:center; color:#8f959e;">该会话暂无有效对话轮次</div>';
+            updateSelectedCount();
+            return;
+          }
+
+          // 渲染轮次复选框
+          turnsList.innerHTML = currentMessages.map((m, idx) => {
+            const isUser = m.role === 'user';
+            const roleClass = isUser ? 'role-user' : 'role-assistant';
+            const roleLabel = isUser ? '👤 用户' : '🤖 AI';
+            const cleanContent = m.content
+              .replace(/<ADDITIONAL_METADATA>[\s\S]*?<\/ADDITIONAL_METADATA>/gi, '')
+              .replace(/<USER_SETTINGS_CHANGE>[\s\S]*?<\/USER_SETTINGS_CHANGE>/gi, '')
+              .replace(/<\/?USER_REQUEST>/gi, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+            const previewText = escapeHtml(cleanContent.slice(0, 80));
+            return `
+              <div class="turn-item" data-index="${idx}">
+                <input type="checkbox" id="turn_chk_${idx}" data-index="${idx}">
+                <div class="turn-info">
+                  <div class="turn-meta">
+                    <span class="turn-role-tag ${roleClass}">${roleLabel}</span>
+                    <span style="font-size:11px; color:#8f959e;">#${idx + 1}</span>
+                  </div>
+                  <div class="turn-preview">${previewText || '(无纯文本)'}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // 绑定点击整行即可勾选
+          turnsList.querySelectorAll('.turn-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+              if (e.target.tagName !== 'INPUT') {
+                const chk = item.querySelector('input[type="checkbox"]');
+                chk.checked = !chk.checked;
+              }
+              updateSelectedCount();
+            });
+          });
+
+          updateSelectedCount();
+        } catch (err) {
+          console.error('读取消息失败:', err);
+          turnsList.innerHTML = `<div style="padding:12px; text-align:center; color:#f53f3f;">读取失败: ${err.message}</div>`;
+          showToast('读取消息失败: ' + err.message, 'error');
+        }
+      }
+
+      function updateSelectedCount() {
+        const checkedList = turnsList.querySelectorAll('input[type="checkbox"]:checked');
+        selectedTurnsCount.textContent = checkedList.length;
+      }
+
+      // 快捷勾选操作
+      btnSelectAll.addEventListener('click', () => {
+        turnsList.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
+        updateSelectedCount();
+      });
+
+      btnSelectNone.addEventListener('click', () => {
+        turnsList.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+        updateSelectedCount();
+      });
+
+      btnSelectRecent3.addEventListener('click', () => {
+        const allCheckboxes = Array.from(turnsList.querySelectorAll('input[type="checkbox"]'));
+        allCheckboxes.forEach(c => c.checked = false);
+        allCheckboxes.slice(-3).forEach(c => c.checked = true);
+        updateSelectedCount();
+      });
+
+      btnRefreshConv.addEventListener('click', loadConversations);
+      convSelect.addEventListener('change', onSelectConversation);
+
+      // 3. 测量沙箱与两级语义切片算法
+      async function buildSlices(selectedMsgs) {
+        // 补丁 4：高度测量前强制等待字体完全就绪，彻底杜绝 offsetHeight 归零
+        await document.fonts.ready;
+        sandbox.className = `theme-${getEffectiveCardTheme()}`;
+
+        const slices = [];
+        let currentSliceNodes = [];
+
+        // 测量沙箱内部渲染气泡 HTML
+        function renderTurnBubbleHtml(msg) {
+          const isUser = msg.role === 'user';
+          const avatarClass = isUser ? 'avatar-user' : 'avatar-assistant';
+          const avatarIcon = isUser ? '👤' : '🤖';
+          const bubbleRoleClass = isUser ? 'bubble-user' : 'bubble-assistant';
+          const senderName = isUser ? '用户提问' : 'Antigravity AI';
+          const parsedContent = sanitizeHtml(marked.parse(msg.content));
+
+          return `
+            <div class="message-bubble ${bubbleRoleClass}">
+              <div class="bubble-header">
+                <div class="bubble-avatar ${avatarClass}">${avatarIcon}</div>
+                <span>${senderName}</span>
+              </div>
+              <div class="bubble-content">${parsedContent}</div>
+            </div>
+          `;
+        }
+
+        // 测量任意 HTML 片段在 750px 沙箱中的真实物理高度
+        function measureHtmlHeight(html) {
+          sandbox.innerHTML = html;
+          return sandbox.offsetHeight;
+        }
+
+        // 当前切片中已有 nodes 的总高度
+        function measureCurrentSliceHeight(nodes) {
+          if (nodes.length === 0) return 0;
+          return measureHtmlHeight(nodes.join(''));
+        }
+
+        for (const msg of selectedMsgs) {
+          const fullTurnHtml = renderTurnBubbleHtml(msg);
+          const fullTurnHeight = measureHtmlHeight(fullTurnHtml);
+
+          // Tier 1：轮次级自适应切片尝试
+          const tentativeSlice = [...currentSliceNodes, fullTurnHtml];
+          const tentativeHeight = measureHtmlHeight(tentativeSlice.join(''));
+
+          if (tentativeHeight <= MAX_CARD_SAFE_HEIGHT) {
+            currentSliceNodes.push(fullTurnHtml);
+          } else {
+            // 加入后超标。如果当前切片已有内容，先封顶保存当前切片
+            if (currentSliceNodes.length > 0) {
+              slices.push([...currentSliceNodes]);
+              currentSliceNodes = [];
+            }
+
+            // 在全新切片中再次测量该轮次
+            if (fullTurnHeight <= MAX_CARD_SAFE_HEIGHT) {
+              currentSliceNodes.push(fullTurnHtml);
+            } else {
+              // 单条轮次自身高度超标，触发 Tier 2 原子语义级降级切片
+              console.log('触发 Tier 2 原子语义切片，单轮消息高度:', fullTurnHeight);
+              sandbox.innerHTML = fullTurnHtml;
+              const bubbleEl = sandbox.querySelector('.message-bubble');
+              const headerEl = bubbleEl.querySelector('.bubble-header');
+              const contentEl = bubbleEl.querySelector('.bubble-content');
+              const children = Array.from(contentEl.children);
+
+              let subNodes = [];
+              let turnIsContinued = false;
+              const isUser = msg.role === 'user';
+              const bubbleRoleClass = isUser ? 'bubble-user' : 'bubble-assistant';
+              const avatarClass = isUser ? 'avatar-user' : 'avatar-assistant';
+              const avatarIcon = isUser ? '👤' : '🤖';
+              const senderName = isUser ? '用户提问' : 'Antigravity AI';
+
+              function wrapSubBubble(subInnerHtml, isContinuedTop = false, isContinuedBottom = false) {
+                const headerHtml = isContinuedTop ? `
+                  <div class="bubble-header">
+                    <div class="bubble-avatar ${avatarClass}">${avatarIcon}</div>
+                    <span>${senderName} <span class="code-slice-tag">(接上张卡片)</span></span>
+                  </div>` : `
+                  <div class="bubble-header">
+                    <div class="bubble-avatar ${avatarClass}">${avatarIcon}</div>
+                    <span>${senderName}</span>
+                  </div>`;
+                const footerTag = isContinuedBottom ? `<div class="code-slice-tag" style="margin-top:8px;">(未完待续，请查看下张卡片...)</div>` : '';
+                return `
+                  <div class="message-bubble ${bubbleRoleClass}">
+                    ${headerHtml}
+                    <div class="bubble-content">
+                      ${subInnerHtml}
+                      ${footerTag}
+                    </div>
+                  </div>
+                `;
+              }
+
+              for (const child of children) {
+                // 检查是否为超长代码块
+                if (child.tagName === 'PRE' && child.offsetHeight > MAX_CODE_BLOCK_SAFE_HEIGHT) {
+                  // 补丁 3 加固：统一使用 textContent 避免离线沙箱 innerText 坍塌
+                  const rawCodeText = child.querySelector('code')?.textContent || child.textContent || '';
+                  // 单行超长字符折叠：每行若超过 500 字符，调用 safeSliceLine 安全折行（代理对感知）
+                  const rawLines = rawCodeText.split('\n');
+                  const normalizedLines = [];
+                  for (const line of rawLines) {
+                    normalizedLines.push(...safeSliceLine(line, 500));
+                  }
+
+                  // 拆分 chunk：双重限制（行数 <= 60 且总字符数 <= 3000）
+                  const chunks = [];
+                  let currentChunkLines = [];
+                  let currentChunkCharCount = 0;
+                  for (const line of normalizedLines) {
+                    const lineLen = line.length + 1;
+                    if (currentChunkLines.length >= 60 || (currentChunkCharCount + lineLen > 3000 && currentChunkLines.length > 0)) {
+                      chunks.push(currentChunkLines);
+                      currentChunkLines = [line];
+                      currentChunkCharCount = lineLen;
+                    } else {
+                      currentChunkLines.push(line);
+                      currentChunkCharCount += lineLen;
+                    }
+                  }
+                  if (currentChunkLines.length > 0) {
+                    chunks.push(currentChunkLines);
+                  }
+
+                  // 分块封装并动态测量合并排版（废除强制单 chunk 单卡片）
+                  for (let c = 0; c < chunks.length; c++) {
+                    const chunkLines = chunks[c];
+                    const isFirstChunk = (c === 0 && !turnIsContinued);
+                    const isLastChunk = (c === chunks.length - 1);
+
+                    const chunkCodeHtml = hljs.highlightAuto(chunkLines.join('\n')).value;
+                    const chunkHtml = `<pre><code>${chunkCodeHtml}</code></pre>`;
+
+                    const wrapped = wrapSubBubble(chunkHtml, !isFirstChunk, !isLastChunk);
+                    const testSlice = [...currentSliceNodes, wrapped];
+
+                    if (measureHtmlHeight(testSlice.join('')) <= MAX_CARD_SAFE_HEIGHT) {
+                      currentSliceNodes.push(wrapped);
+                    } else {
+                      if (currentSliceNodes.length > 0) {
+                        slices.push([...currentSliceNodes]);
+                        currentSliceNodes = [];
+                      }
+                      currentSliceNodes.push(wrapped);
+                    }
+                  }
+                  turnIsContinued = true;
+                } else {
+                  // 普通原子节点（<p>, <table>, <ul> 等）
+                  const childOuter = child.outerHTML;
+                  const testBubble = wrapSubBubble([...subNodes, childOuter].join(''), turnIsContinued, false);
+                  const testSlice = [...currentSliceNodes, testBubble];
+
+                  if (measureHtmlHeight(testSlice.join('')) <= MAX_CARD_SAFE_HEIGHT) {
+                    subNodes.push(childOuter);
+                  } else {
+                    if (subNodes.length > 0) {
+                      currentSliceNodes.push(wrapSubBubble(subNodes.join(''), turnIsContinued, true));
+                      slices.push([...currentSliceNodes]);
+                      currentSliceNodes = [];
+                      subNodes = [childOuter];
+                      turnIsContinued = true;
+                    } else {
+                      if (currentSliceNodes.length > 0) {
+                        slices.push([...currentSliceNodes]);
+                        currentSliceNodes = [];
+                      }
+                      subNodes.push(childOuter);
+                    }
+                  }
+                }
+              }
+
+              if (subNodes.length > 0) {
+                currentSliceNodes.push(wrapSubBubble(subNodes.join(''), turnIsContinued, false));
+              }
+            }
+          }
+        }
+
+        if (currentSliceNodes.length > 0) {
+          slices.push([...currentSliceNodes]);
+        }
+
+        sandbox.innerHTML = '';
+        return slices;
+      }
+
+      // 4. 生成卡片瀑布流并渲染
+      btnGenerate.addEventListener('click', async () => {
+        const checkedBoxes = Array.from(turnsList.querySelectorAll('input[type="checkbox"]:checked'));
+        if (checkedBoxes.length === 0) {
+          showToast('请至少勾选一轮问答！', 'error');
+          return;
+        }
+
+        const selectedMsgs = checkedBoxes.map(chk => {
+          const idx = parseInt(chk.dataset.index, 10);
+          return currentMessages[idx];
+        }).filter(Boolean);
+
+        btnGenerate.disabled = true;
+        btnGenerate.innerHTML = '⏳ 正在测量排版...';
+        cardsList.innerHTML = '';
+        previewSection.style.display = 'block';
+
+        try {
+          const slices = await buildSlices(selectedMsgs);
+          const totalCards = slices.length;
+          cardsSummaryText.textContent = `已智能切片为 ${totalCards} 张长图卡片 (严格受控于 4,000px 安全红线)`;
+
+          const nowTimeStr = new Date().toLocaleString('zh-CN', { hour12: false });
+
+          slices.forEach((sliceNodes, index) => {
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'card-wrapper';
+
+            // 工具栏
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'card-actions';
+            actionsDiv.innerHTML = `
+              <span>卡片 <b>#${index + 1}</b> / 共 ${totalCards} 张</span>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-copy-card" data-card-idx="${index}">📋 复制长图 (微信直发)</button>
+                <button class="btn btn-sm btn-download-card" data-card-idx="${index}">💾 保存 PNG</button>
+              </div>
+            `;
+
+            // 750px 长图卡片容器（动态适配明暗主题）
+            const effectiveTheme = getEffectiveCardTheme();
+            const cardEl = document.createElement('div');
+            cardEl.className = `share-card theme-${effectiveTheme}`;
+            cardEl.id = `shareCard_${index}`;
+
+            cardEl.innerHTML = `
+              <div class="card-header">
+                <div class="card-header-brand">
+                  <div class="brand-icon">⚡</div>
+                  <div class="brand-text">
+                    <h3>${currentTitle}</h3>
+                    <p>Antigravity AI Agent 对话分享</p>
+                  </div>
+                </div>
+                <div class="card-header-date">
+                  <div>生成时间: ${nowTimeStr}</div>
+                  <div style="font-size:11px; margin-top:2px; color:#3370ff;">高清 750px · 无损渲染</div>
+                </div>
+              </div>
+
+              <div class="card-body">
+                ${sliceNodes.join('')}
+              </div>
+
+              <div class="card-footer">
+                <div class="footer-left">
+                  <span>Card ${index + 1} / ${totalCards}</span>
+                  <div>由 Antigravity 智能体系统原生驱动</div>
+                </div>
+                <div>安全无损 · 零 CDN 外链</div>
+              </div>
+            `;
+
+            cardWrapper.appendChild(actionsDiv);
+            cardWrapper.appendChild(cardEl);
+            cardsList.appendChild(cardWrapper);
+
+            // 绑定单个复制与保存事件
+            actionsDiv.querySelector('.btn-copy-card').addEventListener('click', (e) => {
+              copyCardImage(cardEl, e.target);
+            });
+            actionsDiv.querySelector('.btn-download-card').addEventListener('click', () => {
+              downloadCardImage(cardEl, index);
+            });
+          });
+
+          showToast(`成功生成 ${totalCards} 张长图卡片！`, 'success');
+        } catch (err) {
+          console.error('生成卡片失败:', err);
+          showToast('生成卡片失败: ' + err.message, 'error');
+        } finally {
+          btnGenerate.disabled = false;
+          btnGenerate.innerHTML = '⚡ 生成长图卡片';
+        }
+      });
+
+      /**
+       * 高清 750px 无损离屏导出引擎
+       * 保证侧边栏内 100% 垂直自适应的同时，导出的长图仍保持 750px Retina 2x 高清标准
+       */
+      async function renderCardToCanvas(cardElement) {
+        await document.fonts.ready;
+        const clone = cardElement.cloneNode(true);
+        clone.style.width = '750px';
+        clone.style.minWidth = '750px';
+        clone.style.maxWidth = '750px';
+        clone.style.position = 'fixed';
+        clone.style.left = '-99999px';
+        clone.style.top = '0';
+        clone.style.zIndex = '-9999';
+        clone.style.visibility = 'visible';
+        clone.style.opacity = '1';
+        document.body.appendChild(clone);
+        const isDark = clone.classList.contains('theme-dark');
+        const bgColor = isDark ? '#18191c' : '#ffffff';
+        try {
+          return await html2canvas(clone, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: bgColor
+          });
+        } finally {
+          if (clone.parentElement) clone.parentElement.removeChild(clone);
+        }
+      }
+
+      // 5. 复制长图：通道 A (前端直写) + 通道 B (服务端 Base64 管道保底)
+      async function copyCardImage(cardElement, btn) {
+        const origText = btn.innerHTML;
+        try {
+          btn.disabled = true;
+          btn.innerHTML = '⏳ 正在高清渲染...';
+
+          const canvas = await renderCardToCanvas(cardElement);
+
+          // 通道 A：前端原生 Clipboard API
+          let successA = false;
+          if (navigator.clipboard && window.ClipboardItem) {
+            try {
+              const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+              if (blob) {
+                await navigator.clipboard.write([
+                  new ClipboardItem({ 'image/png': blob })
+                ]);
+                successA = true;
+                showToast('长图已成功复制到系统剪贴板！可直接在微信 Ctrl+V 发送', 'success');
+              }
+            } catch (errA) {
+              console.warn('通道 A 原生剪贴板受阻 (失焦或无权限)，启动通道 B 保底:', errA);
+            }
+          }
+
+          if (successA) return;
+
+          // 通道 B：服务端 Base64 内存流 Win32 剪贴板保底
+          btn.innerHTML = '⚡ 写入系统剪贴板...';
+          const base64Data = canvas.toDataURL('image/png');
+          const res = await callApi('/api/clipboard/write-image', { imageBase64: base64Data });
+
+          if (res && res.success) {
+            showToast('长图已成功复制到系统剪贴板！可直接在微信 Ctrl+V 发送', 'success');
+          } else {
+            throw new Error(res?.error || '剪贴板写入失败');
+          }
+        } catch (err) {
+          console.error('复制长图失败:', err);
+          showToast('复制长图失败: ' + err.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      }
+
+      // 6. 保存单张 PNG（通道 A 浏览器下载 + 通道 B 本地服务端物理写入 Downloads 目录）
+      async function downloadCardImage(cardElement, index) {
+        try {
+          showToast('正在渲染导出图片...', 'info');
+          const canvas = await renderCardToCanvas(cardElement);
+          const dataUrl = canvas.toDataURL('image/png');
+          const filename = `antigravity-chat-part-${index + 1}-${Date.now()}.png`;
+
+          // 通道 A：尝试浏览器下载
+          try {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = filename;
+            a.click();
+          } catch (e) {}
+
+          // 通道 B：服务端物理落盘保底并唤起资源管理器
+          const res = await callApi('/api/images/save', {
+            images: [{ filename, base64: dataUrl }]
+          });
+
+          if (res.success) {
+            showToast(`已成功保存到 Downloads 目录并自动唤起资源管理器！`, 'success');
+          } else {
+            showToast(`保存失败: ${res.error || '未知错误'}`, 'error');
+          }
+        } catch (err) {
+          console.error('导出失败:', err);
+          showToast('导出失败: ' + err.message, 'error');
+        }
+      }
+
+      // 7. 一键打包全部下载（批量物理落盘至 Downloads 目录）
+      btnDownloadAll.addEventListener('click', async () => {
+        const cards = cardsList.querySelectorAll('.share-card');
+        if (cards.length === 0) return;
+        btnDownloadAll.disabled = true;
+        btnDownloadAll.innerHTML = '⏳ 正在全量导出并保存...';
+        showToast(`正在批量渲染 ${cards.length} 张长图卡片...`, 'info');
+
+        try {
+          const imagesToSave = [];
+          const timestamp = Date.now();
+          for (let i = 0; i < cards.length; i++) {
+            const canvas = await renderCardToCanvas(cards[i]);
+            const dataUrl = canvas.toDataURL('image/png');
+            const filename = `antigravity-chat-part-${i + 1}-${timestamp}.png`;
+            imagesToSave.push({ filename, base64: dataUrl });
+
+            // 浏览器通道并发尝试
+            try {
+              const a = document.createElement('a');
+              a.href = dataUrl;
+              a.download = filename;
+              a.click();
+            } catch (e) {}
+          }
+
+          // 服务端物理落盘
+          const res = await callApi('/api/images/save', { images: imagesToSave });
+          if (res.success) {
+            showToast(`成功将 ${res.savedCount} 张长图全量保存至 Downloads 目录！`, 'success');
+          } else {
+            throw new Error(res.error || '物理保存失败');
+          }
+        } catch (err) {
+          console.error('全量导出失败:', err);
+          showToast('全量导出失败: ' + err.message, 'error');
+        } finally {
+          btnDownloadAll.disabled = false;
+          btnDownloadAll.innerHTML = '📦 打包下载全量 PNG';
+        }
+      });
+
+      // 8. 实时切换全局风格（界面与长图卡片同步）
+      if (cardThemeSelect) {
+        cardThemeSelect.addEventListener('change', () => {
+          const actual = applyTheme(cardThemeSelect.value);
+          showToast(`全局风格已切换为: ${actual === 'dark' ? '🌙 暗黑风格' : '☀️ 明亮风格'}`, 'info');
+        });
+      }
+
+      // 初始化全局主题
+      let savedThemeMode = 'auto';
+      try { savedThemeMode = localStorage.getItem('antigravity_theme_mode') || 'auto'; } catch(e) {}
+      if (cardThemeSelect) cardThemeSelect.value = savedThemeMode;
+      applyTheme(savedThemeMode);
+
+      // 监听系统深浅主题切换
+      if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+          if (cardThemeSelect && cardThemeSelect.value === 'auto') {
+            applyTheme('auto');
+          }
+        });
+      }
+
+      // 初始化启动
+      loadConversations();
+    })();
+  </script>
+</body>
+</html>

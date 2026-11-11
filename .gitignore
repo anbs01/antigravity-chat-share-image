@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and Temp Files
+*.log
+*.tmp
+*.bak
+__test_*
+
+# Antigravity Brain / Temp
+.user_uploaded/
+.system_generated/
+
+# 显式白名单豁免全局 gitignore 中的 *.md
+!README.md
+!README.zh-CN.md

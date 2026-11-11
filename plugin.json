@@ -1,0 +1,21 @@
+{
+  "name": "chat-share-image",
+  "displayName": "Chat to Image",
+  "description": "Export Antigravity chat history into 750px Retina high-resolution long images. Features smart multi-card slicing, syntax highlighting, dual dark/light themes, and 100% offline zero-token processing.",
+  "version": "1.0.0",
+  "author": {
+    "name": "anbs01",
+    "url": "https://github.com/anbs01"
+  },
+  "logo": "assets/logo.svg",
+  "suggestedPrompts": [
+    "Open Chat to Image panel in sidecar",
+    "Export current conversation into high-res shareable image",
+    "Select recent turns and generate dark theme card"
+  ],
+  "homepage": "https://github.com/anbs01/antigravity-chat-share-image",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anbs01/antigravity-chat-share-image"
+  }
+}
