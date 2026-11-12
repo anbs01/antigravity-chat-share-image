@@ -1028,6 +1028,7 @@
           toastBatchSaved: (n) => `Successfully saved ${n} long cards to Downloads!`,
           toastGenerated: (n) => `Successfully generated ${n} long cards!`,
           toastThemeSwitched: (t) => `Theme switched to: ${t === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}`,
+          toastSelectAtLeastOne: 'Please select at least one turn!',
         },
         zh: {
           appTitle: 'Antigravity 会话长图分享',
@@ -1082,6 +1083,7 @@
           toastBatchSaved: (n) => `成功将 ${n} 张长图全量保存至 Downloads 目录！`,
           toastGenerated: (n) => `成功生成 ${n} 张长图卡片！`,
           toastThemeSwitched: (t) => `全局风格已切换为: ${t === 'dark' ? '🌙 暗黑风格' : '☀️ 明亮风格'}`,
+          toastSelectAtLeastOne: '请至少勾选一轮问答！',
         }
       };
 
@@ -1156,6 +1158,11 @@
             if (roleTag) roleTag.textContent = m.role === 'user' ? t('roleUser') : t('roleAi');
           }
         });
+
+        // 实时联动已生成的长图卡片预览区域与切片统计文本
+        if (lastSelectedMsgs && lastSelectedMsgs.length > 0 && previewSection && previewSection.style.display !== 'none') {
+          buildAndRenderCards(lastSelectedMsgs, false);
+        }
       }
 
       // 全局主题驱动函数（界面与长图卡片同步换肤）
@@ -1184,7 +1191,8 @@
       // 状态缓存
       let currentConversations = [];
       let currentMessages = [];
-      let currentTitle = '会话分享';
+      let currentTitle = 'Antigravity Conversation';
+      let lastSelectedMsgs = null; // 缓存最近一次选中的消息列表，实现语言无感联动重绘
 
       // HTML 转义防御函数（根绝未闭合 XML/HTML 标签导致 DOM 树崩溃与排版坍塌）
       function escapeHtml(str) {
@@ -1340,6 +1348,7 @@
         turnsList.innerHTML = `<div style="padding:12px; text-align:center; color:#8f959e;">${t('parsingTurns')}</div>`;
         turnsBox.style.display = 'block';
         previewSection.style.display = 'none';
+        lastSelectedMsgs = null;
 
         try {
           const res = await callApi('/api/conversation/messages', { conversationId: convId });
@@ -1633,18 +1642,8 @@
       }
 
       // 4. 生成卡片瀑布流并渲染
-      btnGenerate.addEventListener('click', async () => {
-        const checkedBoxes = Array.from(turnsList.querySelectorAll('input[type="checkbox"]:checked'));
-        if (checkedBoxes.length === 0) {
-          showToast('请至少勾选一轮问答！', 'error');
-          return;
-        }
-
-        const selectedMsgs = checkedBoxes.map(chk => {
-          const idx = parseInt(chk.dataset.index, 10);
-          return currentMessages[idx];
-        }).filter(Boolean);
-
+      async function buildAndRenderCards(selectedMsgs, showSuccessToast = false) {
+        if (!selectedMsgs || selectedMsgs.length === 0) return;
         btnGenerate.disabled = true;
         btnGenerate.innerHTML = t('btnGenerating');
         cardsList.innerHTML = '';
@@ -1719,7 +1718,9 @@
             });
           });
 
-          showToast(t('toastGenerated', totalCards), 'success');
+          if (showSuccessToast) {
+            showToast(t('toastGenerated', totalCards), 'success');
+          }
         } catch (err) {
           console.error('生成卡片失败:', err);
           showToast('Failed to generate cards: ' + err.message, 'error');
@@ -1727,6 +1728,22 @@
           btnGenerate.disabled = false;
           btnGenerate.innerHTML = t('btnGenerate');
         }
+      }
+
+      btnGenerate.addEventListener('click', async () => {
+        const checkedBoxes = Array.from(turnsList.querySelectorAll('input[type="checkbox"]:checked'));
+        if (checkedBoxes.length === 0) {
+          showToast(t('toastSelectAtLeastOne'), 'error');
+          return;
+        }
+
+        const selectedMsgs = checkedBoxes.map(chk => {
+          const idx = parseInt(chk.dataset.index, 10);
+          return currentMessages[idx];
+        }).filter(Boolean);
+
+        lastSelectedMsgs = selectedMsgs;
+        await buildAndRenderCards(selectedMsgs, true);
       });
 
       /**
