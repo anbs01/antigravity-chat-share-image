@@ -101,26 +101,6 @@ Run the following one-line command to install the plugin manually into your Anti
 
 ---
 
-## 🛠️ Project Structure
-
-```text
-antigravity-chat-share-image/
-├── plugin.json         # Antigravity plugin manifest
-├── README.md           # English documentation
-├── README.zh-CN.md     # Simplified Chinese documentation
-├── assets/
-│   └── logo.svg        # Standard 128x128 SVG vector icon
-└── sidecars/
-    └── chat-share-image/
-        ├── sidecar.json       # Sidecar auxiliary view definition
-        ├── server.mjs         # Static resource and API server
-        ├── service.mjs        # SQLite data reading and Downloads file saver
-        ├── index.html         # Responsive frontend UI and Canvas renderer
-        └── test_smoke.mjs     # 11-step regression test suite
-```
-
----
-
 ## 📄 License
 
 MIT License. Designed with precision for Antigravity AI Agent users.

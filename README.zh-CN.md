@@ -101,26 +101,6 @@ agy plugin install https://github.com/anbs01/antigravity-chat-share-image
 
 ---
 
-## 🛠️ 项目结构
-
-```text
-antigravity-chat-share-image/
-├── plugin.json         # 官方插件清单元数据
-├── README.md           # 英文主文档
-├── README.zh-CN.md     # 简体中文文档
-├── assets/
-│   └── logo.svg        # 128x128 官方标准高对比矢量 Logo
-└── sidecars/
-    └── chat-share-image/
-        ├── sidecar.json       # Sidecar 辅助侧边栏定义
-        ├── server.mjs         # Node.js 静态资源与 API 服务端
-        ├── service.mjs        # SQLite 数据库读取、管道写入与 Downloads 物理落盘
-        ├── index.html         # 前端自适应交互界面与 Canvas 离屏渲染引擎
-        └── test_smoke.mjs     # 11 项全链路自动化回归测试套件
-```
-
----
-
 ## 📄 License
 
 MIT License. Designed with precision for Antigravity AI Agent users.
